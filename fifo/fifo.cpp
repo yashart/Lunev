@@ -46,8 +46,6 @@ void createFifo(pollfd* fds, short events, int openFlag, const char* fifoName);
 
 int startClient(char* filename);
 int startServer();
-int createServerPipe(int pipefd[2]);
-int sendPipe(int pipefd[2], int fd);
 
 int main(int argc, char* argv[])
 {
@@ -162,8 +160,7 @@ int startServer()
 	pid_t clientPid = 0;
 	command cmd;
 	commandCtor(&cmd);
-	for(int packNum = 0;
-		/*(readQuant = read(fds.fd, &pack, sizeof(pack))) > 0*/1; packNum ++)
+	for(int packNum = 0; 1; packNum ++)
 	{
 		while(packNum == truePack.packNum)
 		{
@@ -208,36 +205,15 @@ int startServer()
 
 		if((truePack.type == DATA)&&(write(STDOUT_FILENO, truePack.data, truePack.dataSize) == -1))
 		{
-			//perror("BAD STDOUT WRITE");
 			return -1;
 		}
 		truePack.type = COMMAND;
-		sleep(1);
 	}
 	packageDtor(&pack);
 	packageDtor(&truePack);
 	commandDtor(&cmd);
 	close(fds.fd);
 	close(commandFifo.fd);
-	return 0;
-}
-
-int createServerPipe(int pipefd[2])
-{
-	if(pipe(pipefd))
-	{
-		perror("BAD PIPE");
-		exit(-1);
-	}
-	return 0;
-}
-
-int sendPipe(int pipefd[2], int fd)
-{
-	if(write(fd, pipefd, sizeof(*pipefd) * 2) != 2 * sizeof(*pipefd))
-	{
-		perror("BAD PIPE CREATE");
-	}
 	return 0;
 }
 
