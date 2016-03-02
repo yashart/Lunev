@@ -1,0 +1,47 @@
+
+    Tree* tree = TreeCtor(4, NULL);
+    TreeNewLeft(TreeNewLeft(tree, 3), 2);
+    TreeNewRight(tree, 5);
+
+    FILE* logfile = fopen("logfile.txt", "wr");
+    FILE* logfile2 = fopen("logfile2.txt", "wr");
+
+    TreeSaveInFile(tree, logfile);
+    fclose(logfile);
+    
+    logfile = fopen("logfile.txt", "r");
+    Tree* tree2 = TreeReadFromFile(logfile, NULL);
+
+    TreeSearch(tree2, 2);
+
+    Tree* treeIns = TreeCtor(5, NULL);
+    TreeInsert(treeIns, 3);
+    TreeInsert(treeIns, 8);
+    TreeInsert(treeIns, 5);
+    TreeInsert(treeIns, 9);
+    TreeInsert(treeIns, 6);
+    TreeInsert(treeIns, 1);
+    TreeInsert(treeIns, 1);
+    TreeInsert(treeIns, 2);
+
+    //treeIns = TreeDelete(treeIns, 1);
+    //treeIns = TreeDelete(treeIns, 5);
+    //treeIns = TreeDelete(treeIns, 8);
+    //treeIns = TreeDelete(treeIns, 9);
+    //treeIns = TreeDelete(treeIns, 3);
+    //treeIns = TreeDelete(treeIns, 6);
+
+    TreeSaveInFile(treeIns, logfile2);
+
+    Tree* treeIter = TreeIteratorFirstElement(treeIns);
+    while(treeIter != NULL)
+    {
+        printf("%d\n", treeIter->data);
+        treeIter = TreeIteratorNextElement(treeIter);
+    }
+    
+    fclose(logfile);
+    fclose(logfile2);
+    TreeDtor(tree);
+    TreeDtor(tree2);
+    TreeDtor(treeIns);
