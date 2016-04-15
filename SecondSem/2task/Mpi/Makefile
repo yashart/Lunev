@@ -5,7 +5,7 @@ all: a.out
 -include *.d
 
 a.out: main.cpp
-	mpic++ -o $@ $^
+	mpicxx -o $@ $^
 
 clean:
 	rm -rf *.o *.out *.d
