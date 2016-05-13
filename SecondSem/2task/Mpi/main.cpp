@@ -162,7 +162,9 @@ int main(int argc, char *argv[])
 				}
 			}
 			catch(...)
-			{}
+			{
+				printf("Hello");
+			}
 		}
 		//end all threads:
 		endtime = MPI_Wtime();
