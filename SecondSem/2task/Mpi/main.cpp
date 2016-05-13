@@ -165,7 +165,9 @@ int main(int argc, char *argv[])
 			{}
 		}
 		//end all threads:
-		
+		endtime = MPI_Wtime();
+		printf("result = %lg, time = %lg", globalResult, endtime-starttime);
+
 		double closeThread[2];
 		closeThread[0] = 0;
 		closeThread[1] = -1;
@@ -174,8 +176,6 @@ int main(int argc, char *argv[])
 			MPI_Send(&closeThread[0], 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
 			MPI_Send(&closeThread[1], 1, MPI_DOUBLE, i, 0, MPI_COMM_WORLD);
 		}
-		endtime = MPI_Wtime();
-		printf("result = %lg, time = %lg", globalResult, endtime-starttime);
 		MPI_Finalize();
 		return 0;
 	}
