@@ -132,32 +132,37 @@ int main(int argc, char *argv[])
 		int recieveMessagesNumbers = 0;
 		while(recieveMessagesNumbers < distanceQuantity - 1)
 		{
-			MPI_Recv(&localResult, 2, MPI_DOUBLE, MPI_ANY_SOURCE,
-					 0, MPI_COMM_WORLD, &status);
-			recieveMessagesNumbers ++;
-			globalResult += localResult[0];
-			//delete recieve message from query
-			for(int i = 0; i < distanceQuantity; i++)
+			try
 			{
-				if(distancesQuery[i].start == localResult[1])
+				MPI_Recv(&localResult, 2, MPI_DOUBLE, MPI_ANY_SOURCE,
+						 0, MPI_COMM_WORLD, &status);
+				recieveMessagesNumbers ++;
+				globalResult += localResult[0];
+				//delete recieve message from query
+				for(int i = 0; i < distanceQuantity; i++)
 				{
-					distancesQuery[i].step = -1;
-					break;
+					if(distancesQuery[i].start == localResult[1])
+					{
+						distancesQuery[i].step = -1;
+						break;
+					}
 				}
-			}
-			while(true)
-			{
-				if(distancesQuery[currentPoint].step > 0)
+				while(true)
 				{
-					MPI_Send(&distancesQuery[currentPoint].start, 1, MPI_DOUBLE, status.MPI_SOURCE,
-						 	0, MPI_COMM_WORLD);
-					MPI_Send(&distancesQuery[currentPoint].end, 1, MPI_DOUBLE, status.MPI_SOURCE,
-							 0, MPI_COMM_WORLD);
+					if(distancesQuery[currentPoint].step > 0)
+					{
+						MPI_Send(&distancesQuery[currentPoint].start, 1, MPI_DOUBLE, status.MPI_SOURCE,
+							 	0, MPI_COMM_WORLD);
+						MPI_Send(&distancesQuery[currentPoint].end, 1, MPI_DOUBLE, status.MPI_SOURCE,
+								 0, MPI_COMM_WORLD);
+						currentPoint = (currentPoint + 1) % distanceQuantity;
+						break;
+					}
 					currentPoint = (currentPoint + 1) % distanceQuantity;
-					break;
 				}
-				currentPoint = (currentPoint + 1) % distanceQuantity;
 			}
+			catch(...)
+			{}
 		}
 		//end all threads:
 		
