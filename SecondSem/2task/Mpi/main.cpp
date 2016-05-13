@@ -85,6 +85,8 @@ int main(int argc, char *argv[])
 
 	int provided = 0;
 	MPI_Init(&argc, &argv);
+	MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+
 
 	//MPI_Errhandler newErrorHandler;
 	//MPI_Comm_create_errhandler(error_handler, &newErrorHandler);
@@ -93,7 +95,6 @@ int main(int argc, char *argv[])
 	int childrenQuantity, procNumber;
 	MPI_Comm_rank(MPI_COMM_WORLD, &procNumber);
 	MPI_Comm_size(MPI_COMM_WORLD, &childrenQuantity);
-	MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 	double globalResult = 0;
 	if(childrenQuantity == 1)
 	{
