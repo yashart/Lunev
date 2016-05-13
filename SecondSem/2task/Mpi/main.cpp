@@ -93,6 +93,7 @@ int main(int argc, char *argv[])
 	int childrenQuantity, procNumber;
 	MPI_Comm_rank(MPI_COMM_WORLD, &procNumber);
 	MPI_Comm_size(MPI_COMM_WORLD, &childrenQuantity);
+	MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 	double globalResult = 0;
 	if(childrenQuantity == 1)
 	{
