@@ -106,6 +106,7 @@ int main(int argc, char** argv)
         Range data;
         while(1)
         {
+            sleep(5);
             int sock2 = client_init(argv[1], argv[2]);
             perror("recv!");
             if(recv(sock2, &data, sizeof(data),\
