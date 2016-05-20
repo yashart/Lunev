@@ -141,6 +141,53 @@ int init_socket(const char* ip_addr, char* port)
     return listener;
 }
 
+int client_init(const char* ip_addr, const char* port)
+{
+    int sock;
+    struct sockaddr_in addr;
+
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if(sock < 0)
+    {
+        perror("socket");
+        exit(1);
+    }
+
+    int keepalive = 1;
+    int keepcnt = 5;
+    int keepidle = 10;
+    int keepintvl = 7;
+    int reuseadrr = 1;
+    
+
+    setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE,\
+            &keepalive, sizeof(int));
+    setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT,\
+            &keepcnt, sizeof(int));
+    setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE,\
+            &keepidle, sizeof(int));
+    setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL,\
+            &keepintvl, sizeof(int));
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
+            &reuseadrr, sizeof(int));
+    //setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,\
+            (char *)&timeout, sizeof(timeout));
+    //setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,\
+            (char *)&timeout, sizeof(timeout));
+
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(atoi(port) + 1); // или любой другой порт...
+    addr.sin_addr.s_addr = inet_addr(ip_addr);
+    if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
+        perror("connect");
+        exit(2);
+    }
+
+    return sock;
+}
+
 sembuf sem_set(int sem_num, int sem_op, int sem_flg)
 {
     sembuf semops;
@@ -239,6 +286,8 @@ int make_connection(char* ip_addr, char* port)
         perror("semop start");
         exit(0);
     }
+
+    client_init(ip_addr, port);
 
     while(1)
     {
