@@ -106,9 +106,8 @@ int main(int argc, char** argv)
         Range data;
         while(1)
         {
-            int sock2 = client_init(argv[3], argv[2]);
             perror("recv!");
-            if(recv(sock2, &data, sizeof(data),\
+            if(recv(sock, &data, sizeof(data),\
              MSG_ERRQUEUE | MSG_PEEK) <= 0)
             {
                 printf("client on port %d was died\n",\
