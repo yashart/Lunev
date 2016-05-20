@@ -92,19 +92,19 @@ int main(int argc, char** argv)
     }
     int sock = client_init(argv[1]);
     int pid = fork();
+
     if(pid != 0)
     {
-        sock_extended_err sockError;
+        Range data;
+        int dataLen = 0;
         while(1)
         {
-            recv(sock, &sockError, sizeof(sockError),\
-                 MSG_ERRQUEUE | MSG_PEEK);
-            printf("socket ee_errno %u ee_origin %u ee_type %u\n",\
-             sockError.ee_errno, sockError.ee_origin,\
-             sockError.ee_type);
-            sleep(2);
+            dataLen = recv(sock, &data, sizeof(data),\
+                             MSG_PEEK);
+            if(dataLen <= 0)
+                break;
         }
-        //kill(pid, SIGKILL);
+        kill(pid, SIGKILL);
         exit(0);
     }
     Answer answer;
