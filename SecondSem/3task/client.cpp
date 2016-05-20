@@ -55,9 +55,9 @@ int client_init(const char* ip_addr, const char* port)
             &keepintvl, sizeof(int));
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
             &reuseadrr, sizeof(int));
-    //setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,\
+    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,\
             (char *)&timeout, sizeof(timeout));
-    //setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,\
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,\
             (char *)&timeout, sizeof(timeout));
 
 
@@ -94,30 +94,12 @@ Answer calc_integral(Range data)
 
 int main(int argc, char** argv)
 {
-    if(argc != 4)
+    if(argc != 3)
     {
-        perror("use ip addr port ip2");
+        perror("use ip addr port");
         return 0;
     }
     int sock = client_init(argv[1], argv[2]);
-    int pid = fork();
-    if(pid != 0)
-    {
-        Range data;
-        while(1)
-        {
-            perror("recv!");
-            if(recv(sock, &data, sizeof(data),\
-             MSG_PEEK) <= 0)
-            {
-                printf("client on port %d was died\n",\
-                         atoi(argv[2]));
-                kill(pid, SIGKILL);
-                break;
-            }
-        }
-        exit(0);
-    }
 
     Answer answer;
     Range data;
