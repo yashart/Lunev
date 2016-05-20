@@ -50,6 +50,9 @@ int client_init(const char* ip_addr)
     int keepidle = 10;
     int keepintvl = 7;
     int reuseadrr = 1;
+    timeval timeout;
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
 
     setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE,\
             &keepalive, sizeof(int));
@@ -61,6 +64,8 @@ int client_init(const char* ip_addr)
             &keepintvl, sizeof(int));
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
             &reuseadrr, sizeof(int));
+    setsockopt (sock, SOL_SOCKET, SO_SNDTIMEO,\
+                (char *)&timeout, sizeof(timeout));
     return sock;
 }
 
@@ -91,22 +96,7 @@ int main(int argc, char** argv)
         return 0;
     }
     int sock = client_init(argv[1]);
-    int pid = fork();
 
-    if(pid != 0)
-    {
-        Range data;
-        int dataLen = 0;
-        while(1)
-        {
-            dataLen = recv(sock, &data, sizeof(data),\
-                             MSG_PEEK);
-            if(dataLen <= 0)
-                break;
-        }
-        kill(pid, SIGKILL);
-        exit(0);
-    }
     Answer answer;
     Range data;
     int bytes_read;
@@ -115,7 +105,8 @@ int main(int argc, char** argv)
         recv(sock, &data, sizeof(data), 0);
         printf("data start: %lf\n", data.start);
         answer = calc_integral(data);
-        send(sock, &answer, sizeof(answer), 0);
+        if(send(sock, &answer, sizeof(answer), 0) <= 0)
+            break;
     }
     close(sock);
 
