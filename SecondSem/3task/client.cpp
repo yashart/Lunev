@@ -137,9 +137,9 @@ Answer calc_integral(Range data)
 
 int main(int argc, char** argv)
 {
-    if(argc != 3)
+    if(argc != 4)
     {
-        perror("use ip addr port");
+        perror("use ip addr port ip2");
         return 0;
     }
 
@@ -151,7 +151,7 @@ int main(int argc, char** argv)
         Range data;
         while(1)
         {
-            int listener = init_socket2(argv[1], argv[2]);
+            int listener = init_socket2(argv[3], argv[2]);
             int sock2 = accept(listener, NULL, NULL);
             if(sock < 0)
             {
@@ -174,7 +174,7 @@ int main(int argc, char** argv)
                     &keepintvl, sizeof(int));
             setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
                     &reuseadrr, sizeof(int));
-            
+
             perror("recv!");
             if(recv(sock2, &data, sizeof(data),\
              MSG_ERRQUEUE | MSG_PEEK) <= 0)
