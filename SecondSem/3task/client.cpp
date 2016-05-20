@@ -35,7 +35,7 @@ int client_init(const char* ip_addr)
         perror("socket");
         exit(1);
     }
-    
+
     int keepalive = 1;
     int keepcnt = 5;
     int keepidle = 10;
@@ -55,8 +55,11 @@ int client_init(const char* ip_addr)
             &keepintvl, sizeof(int));
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
             &reuseadrr, sizeof(int));
-    setsockopt (sock, SOL_SOCKET, SO_SNDTIMEO,\
-                (char *)&timeout, sizeof(timeout));
+    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,\
+            (char *)&timeout, sizeof(timeout));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,\
+            (char *)&timeout, sizeof(timeout));
+
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(3425); // или любой другой порт...
@@ -103,7 +106,8 @@ int main(int argc, char** argv)
     int bytes_read;
     while(1)
     {
-        recv(sock, &data, sizeof(data), 0);
+        if(recv(sock, &data, sizeof(data), 0) <= 0)
+            break;
         printf("data start: %lf\n", data.start);
         answer = calc_integral(data);
         if(send(sock, &answer, sizeof(answer), 0) <= 0)
