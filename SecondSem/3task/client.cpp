@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <math.h>
+#include <signal.h>
+#include <linux/errqueue.h>
 
 struct Range
 {
@@ -83,7 +85,28 @@ Answer calc_integral(Range data)
 
 int main(int argc, char** argv)
 {
+    if(argc != 2)
+    {
+        perror("use ip addr");
+        return 0;
+    }
     int sock = client_init(argv[1]);
+    int pid = fork();
+    if(pid != 0)
+    {
+        sock_extended_err sockError;
+        while(1)
+        {
+            recv(sock, &sockError, sizeof(sockError),\
+                 MSG_ERRQUEUE | MSG_PEEK);
+            printf("socket ee_errno %u ee_origin %u ee_type %u\n",\
+             sockError.ee_errno, sockError.ee_origin,\
+             sockError.ee_type);
+            sleep(2);
+        }
+        //kill(pid, SIGKILL);
+        exit(0);
+    }
     Answer answer;
     Range data;
     int bytes_read;
