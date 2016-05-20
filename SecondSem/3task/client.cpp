@@ -73,49 +73,6 @@ int client_init(const char* ip_addr, const char* port)
     return sock;
 }
 
-int init_socket2(const char* ip_addr, char* port)
-{
-    int listener;
-    struct sockaddr_in addr;
-
-    listener = socket(AF_INET, SOCK_STREAM, 0);
-    int keepalive = 1;
-    int keepcnt = 5;
-    int keepidle = 10;
-    int keepintvl = 7;
-    int reuseadrr = 1;
-
-    setsockopt(listener, SOL_SOCKET, SO_KEEPALIVE,\
-            &keepalive, sizeof(int));
-    setsockopt(listener, IPPROTO_TCP, TCP_KEEPCNT,\
-            &keepcnt, sizeof(int));
-    setsockopt(listener, IPPROTO_TCP, TCP_KEEPIDLE,\
-            &keepidle, sizeof(int));
-    setsockopt(listener, IPPROTO_TCP, TCP_KEEPINTVL,\
-            &keepintvl, sizeof(int));
-    setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,\
-            &reuseadrr, sizeof(int));
-
-    if(listener < 0)
-    {
-        perror("socket");
-        exit(1);
-    }
-    
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(atoi(port) + 1);
-    addr.sin_addr.s_addr = inet_addr(ip_addr);
-    if(bind(listener, (struct sockaddr *)&addr,\
-             sizeof(addr)) < 0)
-    {
-        perror("bind");
-        exit(2);
-    }
-
-    listen(listener, 1);
-    return listener;
-}
-
 double function_value(double argument)
 {
     return sin(argument)/argument;
@@ -142,39 +99,14 @@ int main(int argc, char** argv)
         perror("use ip addr port ip2");
         return 0;
     }
-
     int sock = client_init(argv[1], argv[2]);
-
     int pid = fork();
     if(pid != 0)
     {
         Range data;
         while(1)
         {
-            int listener = init_socket2(argv[3], argv[2]);
-            int sock2 = accept(listener, NULL, NULL);
-            if(sock < 0)
-            {
-                perror("accept");
-                exit(3);
-            }
-            int keepalive = 1;
-            int keepcnt = 5;
-            int keepidle = 10;
-            int keepintvl = 7;
-            int reuseadrr = 1;
-
-            setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE,\
-                    &keepalive, sizeof(int));
-            setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT,\
-                    &keepcnt, sizeof(int));
-            setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE,\
-                    &keepidle, sizeof(int));
-            setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL,\
-                    &keepintvl, sizeof(int));
-            setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
-                    &reuseadrr, sizeof(int));
-
+            int sock2 = client_init(argv[3], argv[2]);
             perror("recv!");
             if(recv(sock2, &data, sizeof(data),\
              MSG_ERRQUEUE | MSG_PEEK) <= 0)
@@ -187,6 +119,7 @@ int main(int argc, char** argv)
         }
         exit(0);
     }
+
     Answer answer;
     Range data;
     int bytes_read;
