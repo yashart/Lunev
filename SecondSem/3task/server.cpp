@@ -98,7 +98,7 @@ int free_shm()
     return 0;
 };
 
-int init_socket(const char* ip_addr)
+int init_socket(const char* ip_addr, char* port)
 {
     int listener;
     struct sockaddr_in addr;
@@ -128,7 +128,7 @@ int init_socket(const char* ip_addr)
     }
     
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(3425);
+    addr.sin_port = htons(atoi(port));
     addr.sin_addr.s_addr = inet_addr(ip_addr);
     if(bind(listener, (struct sockaddr *)&addr,\
              sizeof(addr)) < 0)
@@ -202,9 +202,9 @@ int check_message_in_shm(double start)
     return 0;
 }
 
-int make_connection(char* ip_addr)
+int make_connection(char* ip_addr, char* port)
 {
-    int listener = init_socket(ip_addr);
+    int listener = init_socket(ip_addr, port);
     int sock = accept(listener, NULL, NULL);
     if(sock < 0)
     {
@@ -232,6 +232,14 @@ int make_connection(char* ip_addr)
     Range message;
     Answer answer;
     sembuf semops[2];
+    printf("client on port %d ready\n", atoi(port));
+    semops[0] = sem_set(0, -1, 0);
+    if(semop(semId, semops, 1))
+    {
+        perror("semop start");
+        exit(0);
+    }
+
     while(1)
     {
         semops[0] = sem_set(0, 0, 0);
@@ -263,7 +271,11 @@ int make_connection(char* ip_addr)
         }
         int bytes_read = recv(sock, &answer, sizeof(answer),\
                              MSG_ERRQUEUE);
-        if(bytes_read <= 0) break;
+        if(bytes_read <= 0)
+        {
+            printf("port %d was died\n", atoi(port));
+            break;
+        }
         semops[0] = sem_set(0, 0, 0);
         semops[1] = sem_set(0, 1, 0);
         if(semop(semId, semops, 2))
@@ -304,30 +316,41 @@ int make_connection(char* ip_addr)
     return 0;
 }
 
-int create_n_process(int numberProcess, char* ip_addresses[])
+int create_n_process(int numberProcess,char* ip_addr,\
+                     char* ports[])
 {
-    pid_t pid; 
+    pid_t pid;
+    sembuf semops[2];
+    
+    semops[0] = sem_set(0, 0, 0);
+    semops[1] = sem_set(0, numberProcess, 0);
+    if(semop(semId, semops, 2))
+    {
+        perror("semop start");
+        exit(0);
+    }
     for(int i = 0; i < numberProcess; i++)
     {
         if((pid = fork()) == 0)
         {
-            make_connection(ip_addresses[i]);
+            make_connection(ip_addr, ports[i]);
             exit(0);
         }
     }
+
     return 0;
 }
 
 int main(int argv, char** argc)
 {
     int numberProcess = atoi(argc[1]);
-    if(argv != 2 + numberProcess + 2)
+    if(argv != 3 + numberProcess + 2)
     {
-        perror("Use numberProcess ip1 ip2 ... start end");
+        perror("Use numberProcess ip port1 port2 ... start end");
         return 0;
     }
-    double start = atof(argc[2 + numberProcess]);
-    double end = atof(argc[2 + numberProcess + 1]);
+    double start = atof(argc[3 + numberProcess]);
+    double end = atof(argc[3 + numberProcess + 1]);
 
     init_sem();
     init_shm();
@@ -337,7 +360,7 @@ int main(int argv, char** argc)
 
     *SHM_BUFFER = AllocationQuery_ctor(start, end, STEP);
 
-    create_n_process(numberProcess, &argc[2]);
+    create_n_process(numberProcess, argc[2], &argc[3]);
     int status;
     for(int i = 0; i < numberProcess; i++)
         wait(&status);

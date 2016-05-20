@@ -24,7 +24,7 @@ struct Answer
 };
 
 
-int client_init(const char* ip_addr)
+int client_init(const char* ip_addr, const char* port)
 {
     int sock;
     struct sockaddr_in addr;
@@ -55,14 +55,14 @@ int client_init(const char* ip_addr)
             &keepintvl, sizeof(int));
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
             &reuseadrr, sizeof(int));
-    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,\
+    //setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,\
             (char *)&timeout, sizeof(timeout));
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,\
+    //setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,\
             (char *)&timeout, sizeof(timeout));
 
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(3425); // или любой другой порт...
+    addr.sin_port = htons(atoi(port)); // или любой другой порт...
     addr.sin_addr.s_addr = inet_addr(ip_addr);
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
@@ -94,24 +94,44 @@ Answer calc_integral(Range data)
 
 int main(int argc, char** argv)
 {
-    if(argc != 2)
+    if(argc != 3)
     {
-        perror("use ip addr");
+        perror("use ip addr port");
         return 0;
     }
-    int sock = client_init(argv[1]);
+    int sock = client_init(argv[1], argv[2]);
+    int pid = fork();
+    if(pid != 0)
+    {
+        Range data;
+        while(1)
+        {
+            int sock2 = client_init(argv[1], argv[2]);
+            perror("recv!");
+            if(recv(sock2, &data, sizeof(data),\
+             MSG_ERRQUEUE | MSG_PEEK) <= 0)
+            {
+                printf("client on port %d was died\n",\
+                         atoi(argv[2]));
+                kill(pid, SIGKILL);
+                break;
+            }
+        }
+        exit(0);
+    }
 
     Answer answer;
     Range data;
     int bytes_read;
     while(1)
     {
-        if(recv(sock, &data, sizeof(data), 0) <= 0)
+        if(recv(sock, &data, sizeof(data), MSG_ERRQUEUE) <= 0)
+        {
             break;
+        }
         printf("data start: %lf\n", data.start);
         answer = calc_integral(data);
-        if(send(sock, &answer, sizeof(answer), 0) <= 0)
-            break;
+        send(sock, &answer, sizeof(answer), 0);
     }
     close(sock);
 
