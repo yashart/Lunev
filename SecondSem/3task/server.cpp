@@ -318,19 +318,26 @@ int create_n_process(int numberProcess, char* ip_addresses[])
     return 0;
 }
 
-int main()
+int main(int argv, char** argc)
 {
+    int numberProcess = atoi(argc[1]);
+    if(argv != 2 + numberProcess + 2)
+    {
+        perror("Use numberProcess ip1 ip2 ... start end");
+        return 0;
+    }
+    double start = atof(argc[2 + numberProcess]);
+    double end = atof(argc[2 + numberProcess + 1]);
+
     init_sem();
     init_shm();
+    //char* ip_addresses[2];
+    //ip_addresses[0] = "127.0.0.1";
+    //ip_addresses[1] = "192.168.0.107";
 
-    int numberProcess = 2;
-    char* ip_addresses[2];
-    ip_addresses[0] = "127.0.0.1";
-    ip_addresses[1] = "192.168.0.107";
+    *SHM_BUFFER = AllocationQuery_ctor(start, end, STEP);
 
-    *SHM_BUFFER = AllocationQuery_ctor(0.1, 10, STEP);
-
-    create_n_process(numberProcess, ip_addresses);
+    create_n_process(numberProcess, &argc[2]);
     int status;
     for(int i = 0; i < numberProcess; i++)
         wait(&status);
