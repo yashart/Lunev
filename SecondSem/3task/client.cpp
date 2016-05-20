@@ -35,16 +35,7 @@ int client_init(const char* ip_addr)
         perror("socket");
         exit(1);
     }
-
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(3425); // или любой другой порт...
-    addr.sin_addr.s_addr = inet_addr(ip_addr);
-    if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-    {
-        perror("connect");
-        exit(2);
-    }
-
+    
     int keepalive = 1;
     int keepcnt = 5;
     int keepidle = 10;
@@ -66,6 +57,16 @@ int client_init(const char* ip_addr)
             &reuseadrr, sizeof(int));
     setsockopt (sock, SOL_SOCKET, SO_SNDTIMEO,\
                 (char *)&timeout, sizeof(timeout));
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(3425); // или любой другой порт...
+    addr.sin_addr.s_addr = inet_addr(ip_addr);
+    if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
+        perror("connect");
+        exit(2);
+    }
+
     return sock;
 }
 
