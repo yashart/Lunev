@@ -53,7 +53,7 @@ int client_init(const char* ip_addr, const char* port)
             &keepidle, sizeof(int));
     setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL,\
             &keepintvl, sizeof(int));
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
+    //setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
             &reuseadrr, sizeof(int));
     //setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,\
             (char *)&timeout, sizeof(timeout));
