@@ -42,7 +42,7 @@ int client_init(const char* ip_addr, const char* port)
     int keepintvl = 7;
     int reuseadrr = 1;
     timeval timeout;
-    timeout.tv_sec = 10;
+    timeout.tv_sec = 20;
     timeout.tv_usec = 0;
 
     setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE,\
@@ -55,9 +55,9 @@ int client_init(const char* ip_addr, const char* port)
             &keepintvl, sizeof(int));
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
             &reuseadrr, sizeof(int));
-    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,\
+    //setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,\
             (char *)&timeout, sizeof(timeout));
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,\
+    //setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,\
             (char *)&timeout, sizeof(timeout));
 
 
@@ -100,6 +100,43 @@ int main(int argc, char** argv)
         return 0;
     }
     int sock = client_init(argv[1], argv[2]);
+    int pid = fork();
+    if(pid != 0)
+    {
+        int checkSock = socket(AF_INET, SOCK_STREAM, 0);
+        struct sockaddr_in checkAddr;
+        checkAddr.sin_family = AF_INET;
+        checkAddr.sin_port = htons(atoi(argv[2]));
+        checkAddr.sin_addr.s_addr = inet_addr(argv[1]);
+        if(connect(checkSock, (struct sockaddr *)&checkAddr,\
+             sizeof(checkAddr)) < 0)
+        {
+            perror("connect");
+            exit(2);
+        }
+        int keepalive = 1;
+        int keepcnt = 5;
+        int keepidle = 10;
+        int keepintvl = 7;
+        int reuseadrr = 1;
+
+        setsockopt(checkSock, SOL_SOCKET, SO_KEEPALIVE,\
+                &keepalive, sizeof(int));
+        setsockopt(checkSock, IPPROTO_TCP, TCP_KEEPCNT,\
+                &keepcnt, sizeof(int));
+        setsockopt(checkSock, IPPROTO_TCP, TCP_KEEPIDLE,\
+                &keepidle, sizeof(int));
+        setsockopt(checkSock, IPPROTO_TCP, TCP_KEEPINTVL,\
+                &keepintvl, sizeof(int));
+        Answer checkAnswer;
+        if(recv(checkSock, &checkAnswer,\
+            sizeof(checkAnswer), MSG_PEEK) <= 0)
+        {
+            perror("1111");
+            kill(pid, SIGKILL);
+            exit(0);
+        }
+    }
 
     Answer answer;
     Range data;
