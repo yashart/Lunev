@@ -114,6 +114,7 @@ sockaddr_in broadcast_get_ip(int port)
     socklen_t sendsize = sizeof(addr);
     recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr *)&addr,\
              &sendsize);
+    close(sock);
     return addr;
 }
 

@@ -338,7 +338,7 @@ int udp_brodcast(int port)
     char buf[2] = "1";
     sendto(sock, buf, sizeof(buf), 0,\
            (struct sockaddr *)&addr, sizeof(addr));
-
+    close(sock);
    return 0;
 }
 
