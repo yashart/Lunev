@@ -336,7 +336,8 @@ int udp_brodcast(int port)
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-    sendto(sock, NULL, 0, 0,\
+    char buf[1];
+    sendto(sock, buf, sizeof(buf), 0,\
            (struct sockaddr *)&addr, sizeof(addr));
 
    return 0;

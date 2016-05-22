@@ -110,8 +110,9 @@ sockaddr_in broadcast_get_ip(int port)
         perror("bind");
         exit(2);
     }
+    char buf[1];
     socklen_t sendsize = sizeof(addr);
-    recvfrom(sock, NULL, 0, 0, (struct sockaddr *)&addr,\
+    recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr *)&addr,\
              &sendsize);
     return addr;
 }
@@ -126,6 +127,7 @@ int main(int argc, char** argv)
     }
     sockaddr_in broadcastAddr = broadcast_get_ip(atoi(argv[1]));
     char* ip_addr = inet_ntoa(broadcastAddr.sin_addr);
+    printf("%s\n", ip_addr);
     int sock = client_init(ip_addr, argv[1]);
     
     Answer answer;
