@@ -127,49 +127,7 @@ int main(int argc, char** argv)
     sockaddr_in broadcastAddr = broadcast_get_ip(atoi(argv[1]));
     char* ip_addr = inet_ntoa(broadcastAddr.sin_addr);
     int sock = client_init(ip_addr, argv[1]);
-    int pid = fork();
-    if(pid != 0)
-    {
-        int checkSock = socket(AF_INET, SOCK_STREAM, 0);
-        struct sockaddr_in checkAddr;
-        checkAddr.sin_family = AF_INET;
-        checkAddr.sin_port = htons(atoi(argv[1]));
-        checkAddr.sin_addr.s_addr = inet_addr(ip_addr);
-        
-        int keepalive = 1;
-        int keepcnt = 5;
-        int keepidle = 10;
-        int keepintvl = 7;
-        int reuseadrr = 1;
-
-        setsockopt(checkSock, SOL_SOCKET, SO_KEEPALIVE,\
-                &keepalive, sizeof(int));
-        setsockopt(checkSock, IPPROTO_TCP, TCP_KEEPCNT,\
-                &keepcnt, sizeof(int));
-        setsockopt(checkSock, IPPROTO_TCP, TCP_KEEPIDLE,\
-                &keepidle, sizeof(int));
-        setsockopt(checkSock, IPPROTO_TCP, TCP_KEEPINTVL,\
-                &keepintvl, sizeof(int));
-        if(connect(checkSock, (struct sockaddr *)&checkAddr,\
-             sizeof(checkAddr)) < 0)
-        {
-            perror("connect");
-            exit(2);
-        }
-        Answer checkAnswer;
-        while(1)
-        {
-            if(recv(checkSock, &checkAnswer,\
-                sizeof(checkAnswer), MSG_PEEK|MSG_ERRQUEUE) <= 0)
-            {
-                perror("1111");
-                kill(pid, SIGKILL);
-                exit(0);
-            }
-            perror("22222");
-        }
-    }
-
+    
     Answer answer;
     Range data;
     int bytes_read;
