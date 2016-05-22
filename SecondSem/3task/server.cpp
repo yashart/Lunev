@@ -98,7 +98,7 @@ int free_shm()
     return 0;
 };
 
-int init_socket(const char* ip_addr, char* port)
+int init_socket(char* port)
 {
     int listener;
     struct sockaddr_in addr;
@@ -129,7 +129,7 @@ int init_socket(const char* ip_addr, char* port)
     
     addr.sin_family = AF_INET;
     addr.sin_port = htons(atoi(port));
-    addr.sin_addr.s_addr = inet_addr(ip_addr);
+    addr.sin_addr.s_addr = INADDR_ANY;
     if(bind(listener, (struct sockaddr *)&addr,\
              sizeof(addr)) < 0)
     {
@@ -202,9 +202,9 @@ int check_message_in_shm(double start)
     return 0;
 }
 
-int make_connection(char* ip_addr, char* port)
+int make_connection(char* port)
 {
-    int listener = init_socket(ip_addr, port);
+    int listener = init_socket(port);
     int sock = accept(listener, NULL, NULL);
     if(sock < 0)
     {
@@ -316,7 +316,33 @@ int make_connection(char* ip_addr, char* port)
     return 0;
 }
 
-int create_n_process(int numberProcess,char* ip_addr,\
+
+int udp_brodcast(int port)
+{
+    int sock;
+    struct sockaddr_in addr;
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    int broadcastEnable=1;
+    setsockopt(sock, SOL_SOCKET, SO_BROADCAST,\
+             &broadcastEnable, sizeof(broadcastEnable));
+
+    if(sock < 0)
+    {
+        perror("socket");
+        exit(1);
+    }
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    sendto(sock, NULL, 0, 0,\
+           (struct sockaddr *)&addr, sizeof(addr));
+
+   return 0;
+}
+
+int create_n_process(int numberProcess,\
                      char* ports[])
 {
     pid_t pid;
@@ -333,7 +359,8 @@ int create_n_process(int numberProcess,char* ip_addr,\
     {
         if((pid = fork()) == 0)
         {
-            make_connection(ip_addr, ports[i]);
+            udp_brodcast(atoi(ports[i]));
+            make_connection(ports[i]);
             exit(0);
         }
     }
@@ -344,13 +371,13 @@ int create_n_process(int numberProcess,char* ip_addr,\
 int main(int argv, char** argc)
 {
     int numberProcess = atoi(argc[1]);
-    if(argv != 3 + numberProcess + 2)
+    if(argv != 2 + numberProcess + 2)
     {
-        perror("Use numberProcess ip port1 port2 ... start end");
+        perror("Use numberProcess port1 port2 ... start end");
         return 0;
     }
-    double start = atof(argc[3 + numberProcess]);
-    double end = atof(argc[3 + numberProcess + 1]);
+    double start = atof(argc[2 + numberProcess]);
+    double end = atof(argc[2 + numberProcess + 1]);
 
     init_sem();
     init_shm();
@@ -360,7 +387,7 @@ int main(int argv, char** argc)
 
     *SHM_BUFFER = AllocationQuery_ctor(start, end, STEP);
 
-    create_n_process(numberProcess, argc[2], &argc[3]);
+    create_n_process(numberProcess, &argc[2]);
     int status;
     for(int i = 0; i < numberProcess; i++)
         wait(&status);

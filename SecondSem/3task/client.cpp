@@ -53,11 +53,11 @@ int client_init(const char* ip_addr, const char* port)
             &keepidle, sizeof(int));
     setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL,\
             &keepintvl, sizeof(int));
-    //setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,\
             &reuseadrr, sizeof(int));
-    //setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,\
+    setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO,\
             (char *)&timeout, sizeof(timeout));
-    //setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,\
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,\
             (char *)&timeout, sizeof(timeout));
 
 
@@ -92,28 +92,50 @@ Answer calc_integral(Range data)
     return answer;
 }
 
+sockaddr_in broadcast_get_ip(int port)
+{
+    int sock;
+    sockaddr_in addr;
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sock < 0)
+    {
+        perror("socket");
+        exit(1);
+    }
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    if(bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
+        perror("bind");
+        exit(2);
+    }
+    socklen_t sendsize = sizeof(addr);
+    recvfrom(sock, NULL, 0, 0, (struct sockaddr *)&addr,\
+             &sendsize);
+    return addr;
+}
+
+
 int main(int argc, char** argv)
 {
-    if(argc != 3)
+    if(argc != 2)
     {
-        perror("use ip addr port");
+        perror("use port");
         return 0;
     }
-    int sock = client_init(argv[1], argv[2]);
+    sockaddr_in broadcastAddr = broadcast_get_ip(atoi(argv[1]));
+    char* ip_addr = inet_ntoa(broadcastAddr.sin_addr);
+    int sock = client_init(ip_addr, argv[1]);
     int pid = fork();
     if(pid != 0)
     {
         int checkSock = socket(AF_INET, SOCK_STREAM, 0);
         struct sockaddr_in checkAddr;
         checkAddr.sin_family = AF_INET;
-        checkAddr.sin_port = htons(atoi(argv[2]));
-        checkAddr.sin_addr.s_addr = inet_addr(argv[1]);
-        if(connect(checkSock, (struct sockaddr *)&checkAddr,\
-             sizeof(checkAddr)) < 0)
-        {
-            perror("connect");
-            exit(2);
-        }
+        checkAddr.sin_port = htons(atoi(argv[1]));
+        checkAddr.sin_addr.s_addr = inet_addr(ip_addr);
+        
         int keepalive = 1;
         int keepcnt = 5;
         int keepidle = 10;
@@ -128,13 +150,23 @@ int main(int argc, char** argv)
                 &keepidle, sizeof(int));
         setsockopt(checkSock, IPPROTO_TCP, TCP_KEEPINTVL,\
                 &keepintvl, sizeof(int));
-        Answer checkAnswer;
-        if(recv(checkSock, &checkAnswer,\
-            sizeof(checkAnswer), MSG_PEEK) <= 0)
+        if(connect(checkSock, (struct sockaddr *)&checkAddr,\
+             sizeof(checkAddr)) < 0)
         {
-            perror("1111");
-            kill(pid, SIGKILL);
-            exit(0);
+            perror("connect");
+            exit(2);
+        }
+        Answer checkAnswer;
+        while(1)
+        {
+            if(recv(checkSock, &checkAnswer,\
+                sizeof(checkAnswer), MSG_PEEK|MSG_ERRQUEUE) <= 0)
+            {
+                perror("1111");
+                kill(pid, SIGKILL);
+                exit(0);
+            }
+            perror("22222");
         }
     }
 
