@@ -62,7 +62,7 @@ int client_init(const char* ip_addr, const char* port)
 
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(atoi(port));
+    addr.sin_port = htons(atoi(port)); // или любой другой порт...
     addr.sin_addr.s_addr = inet_addr(ip_addr);
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
@@ -104,20 +104,19 @@ sockaddr_in broadcast_get_ip(int port)
     }
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
     if(bind(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
         perror("bind");
         exit(2);
     }
-    char buf[2] = "0";
-    sockaddr_in addrAnswer;
-    socklen_t sendsize = sizeof(addrAnswer);
-    recvfrom(sock, buf, sizeof(buf), 0,\
-             (sockaddr*)&addrAnswer, &sendsize);
-    printf("buf: %s\n", buf);
-    return addrAnswer;
+    char buf[1];
+    socklen_t sendsize = sizeof(addr);
+    recvfrom(sock, buf, sizeof(buf), 0, (struct sockaddr *)&addr,\
+             &sendsize);
+    return addr;
 }
+
 
 int main(int argc, char** argv)
 {
