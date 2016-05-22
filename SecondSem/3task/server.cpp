@@ -316,7 +316,6 @@ int make_connection(char* port)
     return 0;
 }
 
-
 int udp_brodcast(int port)
 {
     int sock;
@@ -336,7 +335,7 @@ int udp_brodcast(int port)
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-    char buf[1];
+    char buf[2] = "1";
     sendto(sock, buf, sizeof(buf), 0,\
            (struct sockaddr *)&addr, sizeof(addr));
 
@@ -369,16 +368,18 @@ int create_n_process(int numberProcess,\
     return 0;
 }
 
-int main(int argv, char** argc)
+int main(int argc, char** argv)
 {
-    int numberProcess = atoi(argc[1]);
-    if(argv != 2 + numberProcess + 2)
+    int numberProcess = atoi(argv[1]);
+    if(argc != 2 + numberProcess + 2)
     {
         perror("Use numberProcess port1 port2 ... start end");
         return 0;
     }
-    double start = atof(argc[2 + numberProcess]);
-    double end = atof(argc[2 + numberProcess + 1]);
+    printf("number: %d, port1: %s\n",\
+            atoi(argv[1]), argv[2]);
+    double start = atof(argv[2 + numberProcess]);
+    double end = atof(argv[2 + numberProcess + 1]);
 
     init_sem();
     init_shm();
@@ -388,7 +389,7 @@ int main(int argv, char** argc)
 
     *SHM_BUFFER = AllocationQuery_ctor(start, end, STEP);
 
-    create_n_process(numberProcess, &argc[2]);
+    create_n_process(numberProcess, &argv[2]);
     int status;
     for(int i = 0; i < numberProcess; i++)
         wait(&status);
