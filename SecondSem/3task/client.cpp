@@ -128,6 +128,8 @@ int main(int argc, char** argv)
     sockaddr_in broadcastAddr = broadcast_get_ip(atoi(argv[1]));
     char* ip_addr = inet_ntoa(broadcastAddr.sin_addr);
     printf("%s\n", ip_addr);
+    sleep(3);
+
     int sock = client_init(ip_addr, argv[1]);
     
     Answer answer;
