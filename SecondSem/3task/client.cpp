@@ -62,7 +62,7 @@ int client_init(const char* ip_addr, const char* port)
 
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(atoi(port)); // или любой другой порт...
+    addr.sin_port = htons(atoi(port));
     addr.sin_addr.s_addr = inet_addr(ip_addr);
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
