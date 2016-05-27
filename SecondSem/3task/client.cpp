@@ -138,7 +138,7 @@ int main(int argc, char** argv)
     int bytes_read;
     while(1)
     {
-        if(recv(sock, &data, sizeof(data), 0) <= 0)
+        if(recv(sock, &data, sizeof(data), MSG_ERRQUEUE) <= 0)
         {
             break;
         }
