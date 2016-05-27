@@ -9,6 +9,8 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <sys/wait.h>
+#include <time.h>
+
 
 const int INTEGRAL_PARTS_NUMBER = 30;
 const double STEP = 1e-8;
@@ -38,6 +40,7 @@ int semId = 0;
 int shmId = 0;
 int shmResultId = 0;
 double localResult = 0;
+time_t TIME;
 
 
 Range Range_ctor(double start, double end, double step)
@@ -98,7 +101,7 @@ int free_shm()
     return 0;
 };
 
-int init_socket(char* port)
+int init_socket(int port)
 {
     int listener;
     struct sockaddr_in addr;
@@ -128,7 +131,7 @@ int init_socket(char* port)
     }
     
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(atoi(port));
+    addr.sin_port = htons(port);
     addr.sin_addr.s_addr = INADDR_ANY;
     if(bind(listener, (struct sockaddr *)&addr,\
              sizeof(addr)) < 0)
@@ -137,7 +140,6 @@ int init_socket(char* port)
         exit(2);
     }
 
-    listen(listener, 1);
     return listener;
 }
 
@@ -202,9 +204,9 @@ int check_message_in_shm(double start)
     return 0;
 }
 
-int make_connection(char* port)
+int make_connection(char* port, int listener)
 {
-    int listener = init_socket(port);
+    listen(listener, 1);
     int sock = accept(listener, NULL, NULL);
     if(sock < 0)
     {
@@ -355,15 +357,24 @@ int create_n_process(int numberProcess,\
         perror("semop start");
         exit(0);
     }
+    int listener = init_socket(3080);
     for(int i = 0; i < numberProcess; i++)
     {
         if((pid = fork()) == 0)
         {
             udp_brodcast(atoi(ports[i]));
-            make_connection(ports[i]);
+            make_connection(ports[i], listener);
             exit(0);
         }
+        sleep(2);
     }
+    semops[0] = sem_set(0, 0, 0);
+    if(semop(semId, semops, 1))
+    {
+        perror("semop start");
+        exit(0);
+    }
+    TIME = time(NULL);
 
     return 0;
 }
@@ -383,9 +394,6 @@ int main(int argc, char** argv)
 
     init_sem();
     init_shm();
-    //char* ip_addresses[2];
-    //ip_addresses[0] = "127.0.0.1";
-    //ip_addresses[1] = "192.168.0.107";
 
     *SHM_BUFFER = AllocationQuery_ctor(start, end, STEP);
 
@@ -394,7 +402,9 @@ int main(int argc, char** argv)
     for(int i = 0; i < numberProcess; i++)
         wait(&status);
 
-    printf("RESULT: %lf", *GLOBAL_RESULT);
+    printf("RESULT: %lf\n", *GLOBAL_RESULT);
+    printf("TIME: %d\n", (int)(time(NULL) - TIME));
+
     free_sem();
     free_shm();
 

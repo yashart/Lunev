@@ -24,7 +24,7 @@ struct Answer
 };
 
 
-int client_init(const char* ip_addr, const char* port)
+int client_init(const char* ip_addr, int port)
 {
     int sock;
     struct sockaddr_in addr;
@@ -62,7 +62,7 @@ int client_init(const char* ip_addr, const char* port)
 
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(atoi(port)); // или любой другой порт...
+    addr.sin_port = htons(port);
     addr.sin_addr.s_addr = inet_addr(ip_addr);
     if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
@@ -128,10 +128,10 @@ int main(int argc, char** argv)
     }
     sockaddr_in broadcastAddr = broadcast_get_ip(atoi(argv[1]));
     char* ip_addr = inet_ntoa(broadcastAddr.sin_addr);
-    printf("%s\n", ip_addr);
+    printf("%s %d\n", ip_addr, broadcastAddr.sin_port);
     sleep(3);
 
-    int sock = client_init(ip_addr, argv[1]);
+    int sock = client_init(ip_addr, atoi(argv[1]));
     
     Answer answer;
     Range data;
