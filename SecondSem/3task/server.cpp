@@ -206,7 +206,6 @@ int check_message_in_shm(double start)
 
 int make_connection(char* port, int listener)
 {
-    listen(listener, 1);
     int sock = accept(listener, NULL, NULL);
     if(sock < 0)
     {
@@ -363,10 +362,10 @@ int create_n_process(int numberProcess,\
         if((pid = fork()) == 0)
         {
             udp_brodcast(atoi(ports[i]));
+            listen(listener, 1);
             make_connection(ports[i], listener);
             exit(0);
         }
-        sleep(2);
     }
     semops[0] = sem_set(0, 0, 0);
     if(semop(semId, semops, 1))
